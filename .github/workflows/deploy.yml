@@ -7,6 +7,8 @@ on:
     paths:
       - "frontend/**"
       - ".github/workflows/deploy.yml"
+      - "scripts/**"
+      - "README.txt"
   workflow_dispatch:
 
 permissions:
@@ -47,48 +49,7 @@ jobs:
 
       - name: Validate generated entry point and assets
         working-directory: frontend
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          import sys
-
-          root = Path("dist")
-          index = root / "index.html"
-
-          if not index.is_file():
-              raise SystemExit("ERROR: dist/index.html is missing")
-
-          html = index.read_text(encoding="utf-8")
-
-          if 'id="root"' not in html:
-              raise SystemExit("ERROR: React root element is missing")
-
-          if "/agent-topology-auditor/assets/" not in html:
-              raise SystemExit("ERROR: expected GitHub Pages asset base path missing")
-
-          scripts = re.findall(r'<script[^>]+src="([^"]+)"', html)
-          styles = re.findall(r'<link[^>]+href="([^"]+\\.css)"', html)
-
-          if not scripts:
-              raise SystemExit("ERROR: no JavaScript entry point found")
-
-          if not styles:
-              raise SystemExit("ERROR: no CSS asset found")
-
-          for asset in scripts + styles:
-              relative = asset.lstrip("/")
-              target = Path(".") / relative
-
-              if not target.is_file():
-                  raise SystemExit(f"ERROR: referenced asset missing: {target}")
-
-          print("HTML root and generated asset references validated.")
-          print("JavaScript:", scripts)
-          print("Stylesheets:", styles)
-          PY
-
+        run: python3 ../scripts/validate-pages-dist.py
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
