@@ -1,12 +1,84 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Autonomous Agent Topology & Trust-Boundary Audit</title>
+    <meta
+      name="description"
+      content="Autonomous agent topology, trust-boundary, and provenance audit."
+    />
+    <meta name="theme-color" content="#0b0f17" />
+    <title>Autonomous Agent Topology &amp; Trust-Boundary Audit</title>
+    <style>
+      html,
+      body {
+        min-height: 100%;
+        margin: 0;
+        background: #0b0f17;
+        color: #e6edf7;
+        font-family: system-ui, sans-serif;
+      }
+
+      #root {
+        min-height: 100vh;
+      }
+
+      .boot-screen {
+        box-sizing: border-box;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 48px 24px;
+      }
+
+      .boot-screen h1 {
+        color: #38bdf8;
+        font-size: clamp(1.5rem, 4vw, 2.2rem);
+      }
+
+      .boot-screen p {
+        color: #9fb0cc;
+        line-height: 1.7;
+      }
+
+      .boot-indicator {
+        display: inline-block;
+        padding: 8px 12px;
+        border: 1px solid #27324a;
+        border-radius: 6px;
+        background: #121826;
+        color: #f59e0b;
+        font-family: ui-monospace, monospace;
+      }
+    </style>
   </head>
+
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main class="boot-screen" role="status" aria-live="polite">
+        <h1>Agent Topology Auditor</h1>
+        <p>
+          The HTML document loaded. The application JavaScript is initializing.
+          This message will disappear when React mounts.
+        </p>
+        <p class="boot-indicator">APPLICATION BOOT IN PROGRESS</p>
+        <p>
+          If this message remains visible, inspect the browser developer
+          console and JavaScript asset requests.
+        </p>
+      </main>
+    </div>
+
+    <noscript>
+      <main class="boot-screen">
+        <h1>JavaScript is required</h1>
+        <p>Enable JavaScript to run the Agent Topology Auditor application.</p>
+      </main>
+    </noscript>
+
+    <!--
+      This is a Vite source entry, not a published asset URL.
+      Vite applies the configured repository base path during production build.
+    -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

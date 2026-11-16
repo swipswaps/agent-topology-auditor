@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages
+name: Deploy Agent Topology Auditor to GitHub Pages
 
 on:
   push:
@@ -20,46 +20,90 @@ concurrency:
 
 jobs:
   build:
+    name: Build and validate frontend
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install locked dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm ci --no-audit --no-fund
 
-      - name: Build static frontend
+      - name: Build production frontend
         working-directory: frontend
         run: npm run build
 
-      - name: Verify generated site
+      - name: Validate generated entry point and assets
+        working-directory: frontend
+        shell: bash
         run: |
-          test -s frontend/dist/index.html
-          test -d frontend/dist
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          root = Path("dist")
+          index = root / "index.html"
+
+          if not index.is_file():
+              raise SystemExit("ERROR: dist/index.html is missing")
+
+          html = index.read_text(encoding="utf-8")
+
+          if 'id="root"' not in html:
+              raise SystemExit("ERROR: React root element is missing")
+
+          if "/agent-topology-auditor/assets/" not in html:
+              raise SystemExit("ERROR: expected GitHub Pages asset base path missing")
+
+          scripts = re.findall(r'<script[^>]+src="([^"]+)"', html)
+          styles = re.findall(r'<link[^>]+href="([^"]+\\.css)"', html)
+
+          if not scripts:
+              raise SystemExit("ERROR: no JavaScript entry point found")
+
+          if not styles:
+              raise SystemExit("ERROR: no CSS asset found")
+
+          for asset in scripts + styles:
+              relative = asset.lstrip("/")
+              target = Path(".") / relative
+
+              if not target.is_file():
+                  raise SystemExit(f"ERROR: referenced asset missing: {target}")
+
+          print("HTML root and generated asset references validated.")
+          print("JavaScript:", scripts)
+          print("Stylesheets:", styles)
+          PY
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: frontend/dist
 
   deploy:
+    name: Deploy public website
+    runs-on: ubuntu-latest
+    needs: build
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
+
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy GitHub Pages artifact
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
