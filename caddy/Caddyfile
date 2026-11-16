@@ -1,0 +1,18 @@
+{
+    auto_https off
+}
+
+:80 {
+    reverse_proxy audit-backend:8787 {
+        header_up X-Forwarded-Proto https
+        header_up X-Forwarded-Host {http.request.host}
+    }
+}
+
+:443 {
+    tls internal
+    reverse_proxy audit-backend:8787 {
+        header_up X-Forwarded-Proto https
+        header_up X-Forwarded-Host {http.request.host}
+    }
+}

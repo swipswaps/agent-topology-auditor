@@ -1,0 +1,38 @@
+services:
+  audit-backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: agent-topology-audit-backend
+    restart: unless-stopped
+    expose:
+      - "8787"
+    volumes:
+      - audit_sqlite_data:/data
+    environment:
+      - AUDIT_DB_PATH=/data/agent_audit.sqlite3
+      - AUDIT_ALLOWED_ORIGINS=*
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/api/health', timeout=2)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  caddy-proxy:
+    image: caddy:2.8-alpine
+    container_name: agent-topology-caddy-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - audit-backend
+
+volumes:
+  audit_sqlite_data:
+  caddy_data:
+  caddy_config:
